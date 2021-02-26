@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
         # generate markdown text and write to post
         markdown = '''---\nlayout: podcast\ntitle: "%s"\nauthor: %s\ndescription: %s\ndate: %s\nlength: %d\nduration: %d\nguid: %s\n---''' % (
-            title, author, url, dtz.strftime('%Y-%m-%d'), length, duration, name)
+            title.replace('"', '\\"'), author, url, dtz.strftime('%Y-%m-%d'), length, duration, name)
         with open(POSTS_PATH + dtz.strftime('%Y-%m-%d-') + name + '.md', 'w') as f:
             f.write(markdown)
 
