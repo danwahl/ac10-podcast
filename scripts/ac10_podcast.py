@@ -34,15 +34,9 @@ def get_audio(text):
 
 def parse_date(date):
     try:
-        dt = datetime.strptime(date, '%b %d, %Y')
+        dt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ')
     except ValueError:
-        # if that doesn't work, try to parse in '# hr ago' format
-        match = re.search(r'(\d+) hr ago', date)
-        if match:
-            dt = datetime.now() - timedelta(hours=int(match.group(1)))
-        # or just fall back to current date
-        else:
-            dt = datetime.now()
+        dt = datetime.now()
     return dt
 
 if __name__ == '__main__':
@@ -89,7 +83,7 @@ if __name__ == '__main__':
         post = soup.find('article', attrs={'class': 'post'})
         author = 'Scott Alexander'
         title = post.find('h1', attrs={'class': 'post-title'}).text
-        date = post.find('td', attrs={'class': 'post-meta-item post-date'}).text
+        date = post.find('time')['datetime']
 
         # create timezone aware datetime object from date and time
         dt = parse_date(date)
