@@ -66,6 +66,7 @@ if __name__ == '__main__':
     for div in divs[::-1]:
         # get post url
         url = div.find('a', href=True)['href']
+        date = div.find('time')['datetime']
 
         # get post name and build podcast filename
         name = url.split('/')[-1]
@@ -79,11 +80,10 @@ if __name__ == '__main__':
         res = http.request('GET', url)
         soup = BeautifulSoup(res.data, "html5lib")
 
-        # # get post content, get author, title, date, and time
+        # get post content, get author, title, date, and time
         post = soup.find('article', attrs={'class': 'post'})
         author = 'Scott Alexander'
         title = post.find('h1', attrs={'class': 'post-title'}).text
-        date = post.find('time')['datetime']
 
         # create timezone aware datetime object from date and time
         dt = parse_date(date)
