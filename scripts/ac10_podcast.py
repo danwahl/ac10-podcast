@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
+import logging
 import os
 import pytz
 import re
 import sys
-import time
 import urllib3
 
 from bs4 import BeautifulSoup
@@ -41,6 +41,12 @@ def parse_date(date):
 
 if __name__ == '__main__':
     num = 0
+    
+    # check for -d flag for debug mode
+    if len(sys.argv) > 1 and sys.argv[1] == '-d':
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     # setup nltk tokenizer
     # uncomment following line on first run
@@ -48,21 +54,24 @@ if __name__ == '__main__':
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
     # setup polly client
-    # todo(dan): move keys to separate file
+    logging.debug('setting up polly client')
     polly_client = boto3.Session(
         aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
         region_name='us-west-2').client('polly')
 
     # setup urllib pool manager
+    logging.debug('setting up urllib pool manager')
     http = urllib3.PoolManager()
 
     # get and parse archives
+    logging.debug('getting and parsing archives')
     res = http.request('GET', AC10_ARCHIVES)
     soup = BeautifulSoup(res.data, "html5lib")
 
     # get divs containing post links, iterate through list in reverse order
-    divs = soup.find_all('div', attrs={'class': 'post-preview-content'})
+    divs = soup.find_all('div', attrs={'class': re.compile('PostPreviewListing-module__container')})
+    logging.debug('found %d posts' % len(divs))
     for div in divs[::-1]:
         # get post url
         url = div.find('a', href=True)['href']
@@ -89,7 +98,7 @@ if __name__ == '__main__':
         dt = parse_date(date)
         dtz = pytz.timezone("US/Pacific").localize(dt)
 
-        print(dtz.strftime('%Y-%m-%d ') + name)
+        logging.info(dtz.strftime('%Y-%m-%d ') + name)
 
         # initialize pydub object, add introduction
         podcast = AudioSegment.silent(PARAGRAPH_SILENCE)
