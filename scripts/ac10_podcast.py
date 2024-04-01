@@ -21,7 +21,7 @@ PODCASTS_PATH = '../podcasts/'
 POSTS_PATH = '../_posts/'
 
 # link to ac10 archives
-AC10_ARCHIVES = 'https://astralcodexten.substack.com/archive'
+AC10_ARCHIVES = 'https://www.astralcodexten.com/archive'
 
 
 def get_audio(text):
@@ -32,6 +32,7 @@ def get_audio(text):
     seg.seek(0)
     return seg
 
+
 def parse_date(date):
     try:
         dt = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -39,9 +40,10 @@ def parse_date(date):
         dt = datetime.now()
     return dt
 
+
 if __name__ == '__main__':
     num = 0
-    
+
     # check for -d flag for debug mode
     if len(sys.argv) > 1 and sys.argv[1] == '-d':
         logging.basicConfig(level=logging.DEBUG)
@@ -70,16 +72,18 @@ if __name__ == '__main__':
     soup = BeautifulSoup(res.data, "html5lib")
 
     # get divs containing post links, iterate through list in reverse order
-    divs = soup.find_all('div', attrs={'class': re.compile('PostPreviewListing-module__container')})
-    logging.debug('found %d posts' % len(divs))
-    for div in divs[::-1]:
+    links = soup.find_all('a', attrs={'data-testid': 'post-preview-title'})
+    logging.debug('found %d posts' % len(links))
+    for link in links[::-1]:
         # get post url
-        url = div.find('a', href=True)['href']
-        date = div.find('time')['datetime']
+        url = link['href']
 
         # get post name and build podcast filename
         name = url.split('/')[-1]
         filename = name + '.mp3'
+
+        div = link.find_parent('div').find_parent('div')
+        date = div.find('time')['datetime']
 
         # check if filename already exists in podcasts folder, skip if so
         if filename in os.listdir(PODCASTS_PATH):
@@ -102,7 +106,8 @@ if __name__ == '__main__':
 
         # initialize pydub object, add introduction
         podcast = AudioSegment.silent(PARAGRAPH_SILENCE)
-        intro = title + '\r\n\r\nPosted on ' + dtz.strftime("%B %d, %Y") + ' by ' + author
+        intro = title + '\r\n\r\nPosted on ' + \
+            dtz.strftime("%B %d, %Y") + ' by ' + author
         podcast += AudioSegment.from_mp3(get_audio(intro))
         podcast += AudioSegment.silent(PARAGRAPH_SILENCE)
 
